@@ -63,8 +63,11 @@ class Game {
         console.log(message);
     }
 
-    endGame(name) {
-        console.log("We are ending the game here. Winner: " + name);
+    endGame(name, winner) {
+        console.log("We are ending the game here.");
+        if (winner) {
+            console.log("Winner is: " + name);
+        }
         process.exit(1);
     }
 }
@@ -166,6 +169,30 @@ async function main() {
 
     await sleep(1000);
 
+    let iter = 5;
+
+    console.log("Please tell us. Which type of Dice you want to use: Normal Dice or Crooked Dice.")
+
+    function getDiceType() {
+        let diceType = prompt("`C` for Crooked and `N` for Normal Dice:   ");
+
+        if (['c', 'n'].indexOf(diceType.toLowerCase()) == -1) {
+            console.log("Invalid Dice type. Retry (C/N):  ")
+            iter--;
+            if (!iter) {
+                console.log("Maximum Invalid Attempts.");
+                game.endGame()
+            }
+            getDiceType();
+        }
+
+        return diceType;
+    }
+
+    let diceType = getDiceType();
+
+    await sleep(1000);
+
     game.startGame();
 
     await sleep(1000);
@@ -182,8 +209,13 @@ async function main() {
         await sleep(2000);
 
         console.log("\n");
+        let moves;
 
-        let moves = game.rollCrookedDice();
+        if (diceType.toLowerCase() == "c") {
+            moves = game.rollCrookedDice();
+        } else {
+            moves = game.rollDice();
+        }
 
         await sleep(2000);
 
