@@ -1,4 +1,7 @@
-class Game {
+"use strict";
+const prompt = require("prompt-sync")({sigint: true});
+
+let Game = class Game {
     constructor(numPlayers, maxGridSize, turns) {
         this.numPlayers = numPlayers || 1; //Single Player Game
         this.maxGridSize = maxGridSize || 100; // Default board size 100
@@ -10,6 +13,7 @@ class Game {
         this.setSnakesPositions();
         this.setLaddersPositions();
         this.turns = turns || 5;
+        this.maximumAttempts = 3;
     }
 
     setSnakesPositions() {
@@ -41,7 +45,7 @@ class Game {
     }
 
     rollCrookedDice() {
-        this.diceRoll = Math.floor( ((Math.random() * 5) + 2) / 2 ) * 2;
+        this.diceRoll = Math.floor(((Math.random() * 5) + 2) / 2) * 2;
         let string = "You rolled crooked Dice: " + this.diceRoll;
         if (this.diceRoll == this.diceFace) {
             string = "Woohoo .. " + string;
@@ -63,6 +67,20 @@ class Game {
         console.log(message);
     }
 
+    getDiceType() {
+        let diceType = prompt("`C` for Crooked and `N` for Normal Dice:   ");
+        if (['c', 'n'].indexOf(diceType.toLowerCase()) == -1) {
+            console.log("Invalid Dice type. Retry (C/N):  ")
+            this.maximumAttempts--;
+            if (!this.maximumAttempts) {
+                console.log("Maximum Invalid Attempts.");
+                this.endGame()
+            }
+            this.getDiceType();
+        }
+        return diceType;
+    }
+
     endGame(name, winner) {
         console.log("We are ending the game here.");
         if (winner) {
@@ -72,7 +90,7 @@ class Game {
     }
 }
 
-class Player {
+let Player = class Player {
     constructor(name, color) {
         this.currPos = 0;
         this.prevPos = 0;
@@ -96,6 +114,12 @@ class Player {
         return this.currPos;
     }
 
+    setPosition(pos) {
+        console.log("Purpose: Unit test case");
+        this.currPos = pos;
+        return this.currPos;
+    }
+
     finalPosition(moves) {
         this.prevPos = this.currPos;
         this.currPos = this.currPos + parseInt(moves);
@@ -104,7 +128,7 @@ class Player {
          * If running given moves take Player ahead from Maximum Grid
          */
         if (this.currPos > this.g.maxGridSize) {
-            console.log("You need " + (this.g.maxGridSize - this.currPos) + " to win this game. Try again in next turn." );
+            console.log("You need " + (this.g.maxGridSize - this.prevPos) + " to win this game. Try again in next turn.");
             this.currPos = this.prevPos;
         }
 
@@ -156,8 +180,6 @@ async function main() {
 
     let p1 = new Player();
 
-    const prompt = require("prompt-sync")({sigint: true});
-
     let name = prompt("Please enter your name: ");
     let color = prompt("Please choose your color: ");
     p1.setPlayerData(name, color);
@@ -169,27 +191,9 @@ async function main() {
 
     await sleep(1000);
 
-    let iter = 5;
-
     console.log("Please tell us. Which type of Dice you want to use: Normal Dice or Crooked Dice.")
 
-    function getDiceType() {
-        let diceType = prompt("`C` for Crooked and `N` for Normal Dice:   ");
-
-        if (['c', 'n'].indexOf(diceType.toLowerCase()) == -1) {
-            console.log("Invalid Dice type. Retry (C/N):  ")
-            iter--;
-            if (!iter) {
-                console.log("Maximum Invalid Attempts.");
-                game.endGame()
-            }
-            getDiceType();
-        }
-
-        return diceType;
-    }
-
-    let diceType = getDiceType();
+    let diceType = game.getDiceType();
 
     await sleep(1000);
 
@@ -221,6 +225,10 @@ async function main() {
 
         p1.finalPosition(moves);
 
+        p1.getPosition();
+
+        await sleep(1000);
+
         p1.checkWin();
 
         await sleep(1000);
@@ -233,7 +241,10 @@ async function main() {
     process.exit(1);
 }
 
-main();
+module.exports.Game = Game;
+module.exports.Player = Player;
+module.exports.main = main;
+
 
 
 
