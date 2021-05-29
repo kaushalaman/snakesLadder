@@ -9,7 +9,7 @@ class Game {
         this.ladders = new Map();
         this.setSnakesPositions();
         this.setLaddersPositions();
-        this.turns = turns || 1;
+        this.turns = turns || 5;
     }
 
     setSnakesPositions() {
@@ -40,6 +40,16 @@ class Game {
         return this.diceRoll;
     }
 
+    rollCrookedDice() {
+        this.diceRoll = Math.floor( ((Math.random() * 5) + 2) / 2 ) * 2;
+        let string = "You rolled crooked Dice: " + this.diceRoll;
+        if (this.diceRoll == this.diceFace) {
+            string = "Woohoo .. " + string;
+        }
+        console.log(string);
+        return this.diceRoll;
+    }
+
     welcomeMessage() {
         let message = `<============= Welcome to Snake and Ladder Game ===============>
              Rules:
@@ -48,8 +58,14 @@ class Game {
                 3. Move forward the number of grids shown on the dice.
                 4. If you encounter with a ladder, you can move up to the top of the ladder.
                 5. If you encounters with the head of a snake, you will slide down to the bottom of the snake.
-                6. The first player to get to the FINAL position is the winner.`
+                6. The first player to get to the FINAL position is the winner.
+                <===================================================================>`
         console.log(message);
+    }
+
+    endGame(name) {
+        console.log("We are ending the game here. Winner: " + name);
+        process.exit(1);
     }
 }
 
@@ -57,6 +73,7 @@ class Player {
     constructor(name, color) {
         this.currPos = 0;
         this.prevPos = 0;
+        this.g = new Game();
         if (name && color)
             this.setPlayerData(name, color);
     }
@@ -67,8 +84,55 @@ class Player {
     }
 
     welcomeMessage() {
-        let message = "Welcome " + this.name + " to the Snakes and Ladder Game";
+        let message = "Welcome " + this.name + " to the Snakes and Ladder Game. Your chosen color is: " + this.color;
         console.log(message);
+    }
+
+    getPosition() {
+        console.log("Current Position is: " + this.currPos + " Old Position was: " + this.prevPos);
+        return this.currPos;
+    }
+
+    finalPosition(moves) {
+        this.prevPos = this.currPos;
+        this.currPos = this.currPos + parseInt(moves);
+
+        /**
+         * If running given moves take Player ahead from Maximum Grid
+         */
+        if (this.currPos > this.g.maxGridSize) {
+            console.log("You need " + (this.g.maxGridSize - this.currPos) + " to win this game. Try again in next turn." );
+            this.currPos = this.prevPos;
+        }
+
+        /**
+         * If running given moves finds a Ladder
+         */
+        else if (this.g.ladders.get(this.currPos)) {
+            this.currPos = this.g.ladders.get(this.currPos);
+            console.log("Wooaah, You jumped to position: " + this.currPos + " through Ladder.");
+        }
+
+        /**
+         * If running given moves finds a Snake head
+         */
+        else if (this.g.snakes.get(this.currPos)) {
+            this.currPos = this.g.snakes.get(this.currPos);
+            console.log("Oh ho, Snake bites! You will slide down to position: " + this.currPos);
+        }
+        console.log("Your current position is: " + this.currPos);
+        return this.currPos;
+    }
+
+    checkWin() {
+        if (this.currPos === this.g.maxGridSize) {
+            console.log("Wooahh !! COngratulations .... " + this.name + " You won");
+            console.log("Thank You for Playing Game!!");
+            this.g.endGame(this.name);
+            return;
+        }
+        console.log("You haven't won yet. Keep Playing");
+        return;
     }
 }
 
@@ -98,12 +162,20 @@ async function main() {
 
     await sleep(1000);
 
+    console.log("This game has Player: " + game.numPlayers + "\n" + "")
+
+    await sleep(1000);
+
     game.startGame();
 
     await sleep(1000);
 
+    let count = 1;
+
     while (game.turns > 0) {
-        let enter = prompt("Please enter to Roll the dice: ");
+        console.log("\n");
+        console.log("Turn:   ========>> " + count);
+        prompt("Please hit Enter to Roll the dice:    ");
         console.log("\n");
         console.log("Rolling the dice: =========> ");
 
@@ -111,9 +183,22 @@ async function main() {
 
         console.log("\n");
 
-        let moves = game.rollDice();
+        let moves = game.rollCrookedDice();
+
+        await sleep(2000);
+
+        p1.finalPosition(moves);
+
+        p1.checkWin();
+
+        await sleep(1000);
+
         game.turns--;
+        count++;
     }
+    await sleep(1000);
+    console.log("All turns are executed. Thanks for Playing Game. :)")
+    process.exit(1);
 }
 
 main();
