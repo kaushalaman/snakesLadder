@@ -2,7 +2,7 @@
 const prompt = require("prompt-sync")({sigint: true});
 
 let Game = class Game {
-    constructor(numPlayers, maxGridSize, turns) {
+    constructor(numPlayers, maxGridSize, MaximumTurns) {
         this.numPlayers = numPlayers || 1; //Single Player Game
         this.maxGridSize = maxGridSize || 100; // Default board size 100
         this.diceFace = 6;
@@ -12,8 +12,19 @@ let Game = class Game {
         this.ladders = new Map();
         this.setSnakesPositions();
         this.setLaddersPositions();
-        this.turns = turns || 5;
         this.maximumAttempts = 3;
+        this.MaximumTurns = MaximumTurns || 5;
+        this.Players = [];
+
+        /**
+         * Game consists Players so initializing Player instances as well
+         */
+        for (let i=0; i < this.numPlayers; i++) {
+            let name = prompt("Please enter your name: ");
+            let color = prompt("Please choose your color: ");
+            this.Players.push(new Player(name, color));
+            this.Players[i].welcomeMessage();
+        }
     }
 
     setSnakesPositions() {
@@ -94,7 +105,7 @@ let Player = class Player {
     constructor(name, color) {
         this.currPos = 0;
         this.prevPos = 0;
-        this.g = new Game();
+        this.turns = 0; // Player number of turns. He will start from 0
         if (name && color)
             this.setPlayerData(name, color);
     }
@@ -120,42 +131,52 @@ let Player = class Player {
         return this.currPos;
     }
 
-    finalPosition(moves) {
+    /**
+     * Passing second argument an instance of game because we need to access game properties
+     * @param moves
+     * @param g
+     * @returns {number}
+     */
+    finalPosition(moves, g) {
         this.prevPos = this.currPos;
         this.currPos = this.currPos + parseInt(moves);
 
         /**
          * If running given moves take Player ahead from Maximum Grid
          */
-        if (this.currPos > this.g.maxGridSize) {
-            console.log("You need " + (this.g.maxGridSize - this.prevPos) + " to win this game. Try again in next turn.");
+        if (this.currPos > g.maxGridSize) {
+            console.log("You need " + (g.maxGridSize - this.prevPos) + " to win this game. Try again in next turn.");
             this.currPos = this.prevPos;
         }
 
         /**
          * If running given moves finds a Ladder
          */
-        else if (this.g.ladders.get(this.currPos)) {
-            this.currPos = this.g.ladders.get(this.currPos);
+        else if (g.ladders.get(this.currPos)) {
+            this.currPos = g.ladders.get(this.currPos);
             console.log("Wooaah, You jumped to position: " + this.currPos + " through Ladder.");
         }
 
         /**
          * If running given moves finds a Snake head
          */
-        else if (this.g.snakes.get(this.currPos)) {
-            this.currPos = this.g.snakes.get(this.currPos);
+        else if (g.snakes.get(this.currPos)) {
+            this.currPos = g.snakes.get(this.currPos);
             console.log("Oh ho, Snake bites! You will slide down to position: " + this.currPos);
         }
         console.log("Your current position is: " + this.currPos);
         return this.currPos;
     }
 
-    checkWin() {
-        if (this.currPos === this.g.maxGridSize) {
+    /**
+     * We need to pass game instance as an argument
+     * @param g
+     */
+    checkWin(g) {
+        if (this.currPos === g.maxGridSize) {
             console.log("Wooahh !! COngratulations .... " + this.name + " You won");
             console.log("Thank You for Playing Game!!");
-            this.g.endGame(this.name);
+            g.endGame(this.name);
             return;
         }
         console.log("You haven't won yet. Keep Playing");
@@ -178,14 +199,7 @@ async function main() {
 
     await sleep(1000);
 
-    let p1 = new Player();
-
-    let name = prompt("Please enter your name: ");
-    let color = prompt("Please choose your color: ");
-    p1.setPlayerData(name, color);
-    p1.welcomeMessage();
-
-    await sleep(1000);
+    let p1 = game.Players[0];
 
     console.log("This game has Player: " + game.numPlayers + "\n" + "")
 
@@ -203,9 +217,15 @@ async function main() {
 
     let count = 1;
 
-    while (game.turns > 0) {
+    /**
+     * As per requirement, single player will play so creating a single instance of Player
+     * 
+     * if we want it to be generic for multiplyaers we can run Loop on game.Players array and then run turns for each player
+     */
+
+    while (p1.turns < game.MaximumTurns) {
         console.log("\n");
-        console.log("Turn:   ========>> " + count);
+        console.log("Player: "+ p1.name + " Turn:   ========>> " + count);
         prompt("Please hit Enter to Roll the dice:    ");
         console.log("\n");
         console.log("Rolling the dice: =========> ");
@@ -223,17 +243,17 @@ async function main() {
 
         await sleep(2000);
 
-        p1.finalPosition(moves);
+        p1.finalPosition(moves, game);
 
         p1.getPosition();
 
         await sleep(1000);
 
-        p1.checkWin();
+        p1.checkWin(game);
 
         await sleep(1000);
-
-        game.turns--;
+        
+        p1.turns++;
         count++;
     }
     await sleep(1000);
