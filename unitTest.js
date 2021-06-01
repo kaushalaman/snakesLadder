@@ -40,7 +40,7 @@ function validateData(initialPosition, finalPosition, diceRollValue) {
  */
 let diceRollValue = 4;
 let initialPosition = testPlayer.getPosition();
-let finalPosition = testPlayer.finalPosition(diceRollValue);
+let finalPosition = testPlayer.finalPosition(diceRollValue, game);
 
 try {
 
@@ -49,14 +49,14 @@ try {
     console.log("Passed")
 
     initialPosition = testPlayer.setPosition(10);
-    finalPosition = testPlayer.finalPosition(diceRollValue);
+    finalPosition = testPlayer.finalPosition(diceRollValue, game);
 
     console.log("Test Case 2 =======> Initial: 10, Final: 7");
     validateData(initialPosition, finalPosition, diceRollValue);
     console.log("Passed")
 
     initialPosition = testPlayer.setPosition(15);
-    finalPosition = testPlayer.finalPosition(diceRollValue);
+    finalPosition = testPlayer.finalPosition(diceRollValue, game);
 
     console.log("Test Case 3 =======> Initial: 15, Final: 19");
     validateData(initialPosition, finalPosition, diceRollValue);
@@ -64,7 +64,7 @@ try {
 
 
     initialPosition = testPlayer.setPosition(97);
-    finalPosition = testPlayer.finalPosition(diceRollValue);
+    finalPosition = testPlayer.finalPosition(diceRollValue, game);
 
     console.log("Test Case 3 =======> Initial: 97, Final: 97");
     validateData(initialPosition, finalPosition, diceRollValue);
